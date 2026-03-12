@@ -7,3 +7,4 @@ defiance-tools.opensdf
 .vs/
 bin/
 build/
+/.venv
