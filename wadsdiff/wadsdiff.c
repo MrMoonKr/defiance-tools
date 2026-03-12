@@ -116,11 +116,11 @@ int main( int argc, const char* argv[]) {
 
 			if(((search != NULL) && (strstr(from_wr->name, search) != NULL)) || search == NULL) {
 				if(to_wr == NULL) {
-					fprintf(out_file, "\"D\",\"%s\",\"%s\",\"%d\"\n", from_wd.files[w].filename, from_wr->name);
+					fprintf(out_file, "\"D\",\"%s\",\"%s\",\"\"\n", from_wd.files[w].filename, from_wr->name);
 					deletes++;
 				}
 				else if(from_wr->data_size != to_wr->data_size) {
-					fprintf(out_file, "\"C\",\"%s\",\"%s\",\"\"\n", from_wd.files[w].filename, from_wr->name, to_wr->data_size - from_wr->data_size);
+					fprintf(out_file, "\"C\",\"%s\",\"%s\",\"\"\n", from_wd.files[w].filename, from_wr->name);
 					changes++;
 				}
 			}

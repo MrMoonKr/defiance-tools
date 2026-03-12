@@ -4,3 +4,6 @@ ipch
 batch
 dist
 defiance-tools.opensdf
+.vs/
+bin/
+build/

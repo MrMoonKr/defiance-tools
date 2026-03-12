@@ -174,8 +174,8 @@ int WadWriteSkiToObj(wad_dir * wd,  wad_record * wr, uint32_t no_alpha, uint32_t
 			mesh_header = (mes_ski_mesh_header*)(data + mesh_records[mesh_counter].offset);	
 			material_header = (mes_ski_material_header *)(data + material_records[mesh_material_ids[mesh_counter]].offset);
 						
-			DEBUG_PRINT(("    [%d] O=%d", mesh_counter, mesh_records[mesh_counter].offset));
-			DEBUG_PRINT((" S=%d", mesh_records[mesh_counter].size));
+			DEBUG_PRINT(("    [%d] O=%llu", mesh_counter, (unsigned long long)mesh_records[mesh_counter].offset));
+			DEBUG_PRINT((" S=%llu", (unsigned long long)mesh_records[mesh_counter].size));
 			DEBUG_PRINT((" BPV=%d", mesh_header->bytes_per_vertex));
 			DEBUG_PRINT((" V=%d", mesh_header->num_vertices1));
 			DEBUG_PRINT((" I=%d\n", mesh_header->num_indices1));
