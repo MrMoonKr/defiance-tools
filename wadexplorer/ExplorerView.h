@@ -50,6 +50,52 @@ private:
 };
 
 
+class CGlPage : public CWnd
+{
+public:
+    CGlPage() = default;
+    virtual ~CGlPage() override = default;
+
+    void Clear(const std::wstring& message);
+    void SetMeshPreview(const WadMeshPreview& preview, const std::wstring& title, const std::wstring& detail);
+    void SetScene(const std::wstring& title, const std::wstring& detail, bool meshCandidate);
+
+protected:
+    virtual void OnAttach() override;
+    virtual void PreCreate(CREATESTRUCT& cs) override;
+    virtual void PreRegisterClass(WNDCLASS& wc) override;
+    virtual LRESULT WndProc(UINT msg, WPARAM wparam, LPARAM lparam) override;
+
+private:
+    CGlPage(const CGlPage&) = delete;
+    CGlPage& operator=(const CGlPage&) = delete;
+
+    bool InitializeOpenGl();
+    void DestroyOpenGl();
+    void RenderFrame(HDC hdc);
+    void DrawOverlay(HDC hdc) const;
+    void DrawMeshWireframeFallback(HDC hdc) const;
+
+    bool m_hasMeshPreview = false;
+    std::wstring m_title;
+    std::wstring m_detail;
+    bool m_meshCandidate = false;
+    bool m_glReady = false;
+    std::vector<float> m_meshPositions;
+    std::vector<float> m_meshNormals;
+    std::vector<uint32_t> m_meshIndices;
+    float m_meshCenterX = 0.0f;
+    float m_meshCenterY = 0.0f;
+    float m_meshCenterZ = 0.0f;
+    float m_meshRadius = 1.0f;
+    HGLRC m_glrc = nullptr;
+    UINT_PTR m_timerId = 0;
+    float m_rotationDegrees = 0.0f;
+    int m_clientWidth = 1;
+    int m_clientHeight = 1;
+};
+
+
 class CAssetTreeView : public CTreeView
 {
 public:
@@ -99,12 +145,16 @@ private:
     void ShowFolderNode(size_t wadIndex, const std::wstring& folderKey, size_t assetCount, uint64_t totalSize);
     void ShowAssetNode(size_t wadIndex, size_t assetIndex);
     void ResetRightViews(const std::wstring& message);
+    void RebuildFilteredTree();
     void SetImageText(const std::wstring& text);
     void SetImagePreview(const WadImagePreview& preview);
+    void SetGlMeshPreview(const WadMeshPreview& preview, const std::wstring& title, const std::wstring& detail);
+    void SetGlScene(const std::wstring& title, const std::wstring& detail, bool meshCandidate);
     void SetGlText(const std::wstring& text);
     void SetRootPath(const std::wstring& pathText);
     void SetStatusText(const std::wstring& text);
     bool IsOnSplitter(int x) const;
+    bool AssetMatchesFilter(const WadAsset& asset) const;
 
     enum class TreeNodeKind
     {
@@ -124,11 +174,24 @@ private:
         uint64_t totalSize = 0;
     };
 
+    enum class AssetFilter
+    {
+        All = 0,
+        Mesh,
+        Skin,
+        Texture,
+        Actor,
+        Sound,
+        Other,
+    };
+
     static constexpr int kMinLeftPaneWidth = 220;
     static constexpr int kMinRightPaneWidth = 320;
 
     CStatic m_rootLabel;
     CEdit m_pathEdit;
+    CStatic m_filterLabel;
+    CComboBox m_filterCombo;
     CButton m_openFolderButton;
     CButton m_openFileButton;
     CAssetTreeView m_tree;
@@ -138,10 +201,11 @@ private:
 
     CTextPage* m_hexPage;
     CImagePage* m_imagePage;
-    CTextPage* m_glPage;
+    CGlPage* m_glPage;
 
     WadArchiveModel m_model;
     std::unordered_map<HTREEITEM, TreeNodeData> m_treeNodeData;
+    AssetFilter m_assetFilter;
     int m_leftPaneWidth;
     int m_splitterWidth;
     bool m_isDraggingSplitter;

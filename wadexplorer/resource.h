@@ -8,5 +8,6 @@
 #define IDC_TAB_VIEW 1005
 #define IDC_STATUS_TEXT 1006
 #define IDC_PROGRESS 1007
+#define IDC_FILTER_COMBO 1008
 
 #endif

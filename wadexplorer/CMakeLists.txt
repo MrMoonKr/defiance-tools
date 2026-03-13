@@ -25,6 +25,7 @@ target_link_libraries(
     shell32
     shlwapi
     ole32
+    opengl32
 )
 
 target_compile_definitions(

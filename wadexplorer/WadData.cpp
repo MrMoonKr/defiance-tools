@@ -5,6 +5,7 @@
 #include <chrono>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 
@@ -81,6 +82,40 @@ namespace
             joined += parts[index];
         }
         return joined;
+    }
+
+    float HalfToFloat(uint16_t value)
+    {
+        const float sign = (value & 0x8000U) ? -1.0f : 1.0f;
+        const uint32_t exponent = (value >> 10) & 0x1FU;
+        const uint32_t fraction = value & 0x03FFU;
+
+        if (exponent == 0)
+        {
+            if (fraction == 0)
+                return sign * 0.0f;
+            return sign * std::ldexp(static_cast<float>(fraction), -24);
+        }
+
+        if (exponent == 31)
+        {
+            if (fraction == 0)
+                return sign * std::numeric_limits<float>::infinity();
+            return std::numeric_limits<float>::quiet_NaN();
+        }
+
+        return sign * std::ldexp(static_cast<float>(fraction + 1024), static_cast<int>(exponent) - 25);
+    }
+
+    void NormalizeVector(float& x, float& y, float& z)
+    {
+        const float length = std::sqrt((x * x) + (y * y) + (z * z));
+        if (length > 1e-6f)
+        {
+            x /= length;
+            y /= length;
+            z /= length;
+        }
     }
 }
 
@@ -326,6 +361,237 @@ std::optional<WadImagePreview> WadArchiveModel::ExtractTexturePreview(const std:
     return std::nullopt;
 }
 
+std::optional<WadMeshPreview> WadArchiveModel::ExtractMeshPreview(const std::vector<uint8_t>& bytes)
+{
+    if (bytes.size() < sizeof(rmid_header) + sizeof(mes_ski_header))
+        return std::nullopt;
+
+    const auto* header = reinterpret_cast<const rmid_header*>(bytes.data());
+    if (header->magic != kRmidMagic || header->type != RMID_TYPE_MES)
+        return std::nullopt;
+
+    const auto* base = bytes.data();
+    const size_t baseSize = bytes.size();
+    const auto* meshFileHeader = reinterpret_cast<const mes_ski_header*>(base + sizeof(rmid_header));
+
+    if (meshFileHeader->mesh_table_offset + (static_cast<uint64_t>(meshFileHeader->total_meshes) * sizeof(mes_ski_mesh_record)) > baseSize)
+        return std::nullopt;
+
+    const auto* meshRecords = reinterpret_cast<const mes_ski_mesh_record*>(base + meshFileHeader->mesh_table_offset);
+
+    WadMeshPreview preview{};
+    preview.description = L"Static mesh preview";
+
+    for (uint32_t meshIndex = 0; meshIndex < meshFileHeader->total_meshes; ++meshIndex)
+    {
+        const auto& meshRecord = meshRecords[meshIndex];
+        if (meshRecord.offset + sizeof(mes_ski_mesh_header) > baseSize)
+            continue;
+
+        const auto* meshHeader = reinterpret_cast<const mes_ski_mesh_header*>(base + meshRecord.offset);
+        if (meshHeader->num_vertices1 == 0 || meshHeader->num_indices1 < 3 || meshHeader->bytes_per_vertex == 0)
+            continue;
+
+        if (meshHeader->vertex_data_offset >= meshRecord.size || meshHeader->index_data_offset >= meshRecord.size)
+            continue;
+
+        const size_t vertexDataOffset = static_cast<size_t>(meshRecord.offset + meshHeader->vertex_data_offset);
+        const size_t indexDataOffset = static_cast<size_t>(meshRecord.offset + meshHeader->index_data_offset);
+        const size_t vertexBytes = static_cast<size_t>(meshHeader->num_vertices1) * meshHeader->bytes_per_vertex;
+        if (vertexDataOffset + vertexBytes > baseSize || indexDataOffset > baseSize)
+            continue;
+
+        const auto* vertexData = base + vertexDataOffset;
+        const auto* indexData = base + indexDataOffset;
+        const size_t recordIndexBytes = static_cast<size_t>(meshRecord.size - meshHeader->index_data_offset);
+        const size_t fileIndexBytes = baseSize - indexDataOffset;
+        const size_t availableIndexBytes = std::min(recordIndexBytes, fileIndexBytes);
+        const bool use32BitIndices = availableIndexBytes >= static_cast<size_t>(meshHeader->num_indices1) * sizeof(uint32_t);
+        const bool use16BitIndices = !use32BitIndices &&
+            availableIndexBytes >= static_cast<size_t>(meshHeader->num_indices1) * sizeof(uint16_t);
+        if (!use32BitIndices && !use16BitIndices)
+            continue;
+
+        const uint32_t vertexOffset = preview.vertexCount;
+        preview.positions.reserve(preview.positions.size() + (static_cast<size_t>(meshHeader->num_vertices1) * 3));
+        preview.normals.reserve(preview.normals.size() + (static_cast<size_t>(meshHeader->num_vertices1) * 3));
+
+        for (uint32_t vertexIndex = 0; vertexIndex < meshHeader->num_vertices1; ++vertexIndex)
+        {
+            const auto* vertex = vertexData + (static_cast<size_t>(vertexIndex) * meshHeader->bytes_per_vertex);
+
+            float x = 0.0f;
+            float y = 0.0f;
+            float z = 0.0f;
+            size_t offset = 0;
+
+            if ((meshHeader->vertex_format & UNCOMPRESSED) != 0)
+            {
+                x = *reinterpret_cast<const float*>(vertex + 0);
+                y = *reinterpret_cast<const float*>(vertex + 4);
+                z = *reinterpret_cast<const float*>(vertex + 8);
+                offset = 12;
+            }
+            else
+            {
+                x = HalfToFloat(*reinterpret_cast<const uint16_t*>(vertex + 0));
+                y = HalfToFloat(*reinterpret_cast<const uint16_t*>(vertex + 2));
+                z = HalfToFloat(*reinterpret_cast<const uint16_t*>(vertex + 4));
+                offset = 8;
+            }
+
+            float nx = 0.0f;
+            float ny = 1.0f;
+            float nz = 0.0f;
+            if ((meshHeader->vertex_format & NORMAL) != 0 && offset + 12 <= meshHeader->bytes_per_vertex)
+            {
+                nx = *reinterpret_cast<const float*>(vertex + offset + 0);
+                ny = *reinterpret_cast<const float*>(vertex + offset + 4);
+                nz = *reinterpret_cast<const float*>(vertex + offset + 8);
+                NormalizeVector(nx, ny, nz);
+            }
+
+            preview.positions.push_back(x);
+            preview.positions.push_back(y);
+            preview.positions.push_back(z);
+            preview.normals.push_back(nx);
+            preview.normals.push_back(ny);
+            preview.normals.push_back(nz);
+        }
+
+        for (uint32_t faceIndex = 0; faceIndex + 2 < meshHeader->num_indices1; faceIndex += 3)
+        {
+            uint32_t v1 = 0;
+            uint32_t v2 = 0;
+            uint32_t v3 = 0;
+
+            if (use32BitIndices)
+            {
+                const auto* face = reinterpret_cast<const mes_face_32*>(indexData);
+                v1 = face[faceIndex / 3].v1;
+                v2 = face[faceIndex / 3].v2;
+                v3 = face[faceIndex / 3].v3;
+            }
+            else
+            {
+                const auto* face = reinterpret_cast<const mes_face_16*>(indexData);
+                v1 = face[faceIndex / 3].v1;
+                v2 = face[faceIndex / 3].v2;
+                v3 = face[faceIndex / 3].v3;
+            }
+
+            if (v1 >= meshHeader->num_vertices1 || v2 >= meshHeader->num_vertices1 || v3 >= meshHeader->num_vertices1)
+                continue;
+
+            preview.indices.push_back(vertexOffset + v3);
+            preview.indices.push_back(vertexOffset + v2);
+            preview.indices.push_back(vertexOffset + v1);
+        }
+
+        preview.vertexCount += meshHeader->num_vertices1;
+    }
+
+    if (preview.positions.empty() || preview.indices.empty())
+        return std::nullopt;
+
+    preview.triangleCount = static_cast<uint32_t>(preview.indices.size() / 3);
+
+    float minX = preview.positions[0];
+    float minY = preview.positions[1];
+    float minZ = preview.positions[2];
+    float maxX = minX;
+    float maxY = minY;
+    float maxZ = minZ;
+    for (size_t index = 0; index < preview.positions.size(); index += 3)
+    {
+        minX = std::min(minX, preview.positions[index + 0]);
+        minY = std::min(minY, preview.positions[index + 1]);
+        minZ = std::min(minZ, preview.positions[index + 2]);
+        maxX = std::max(maxX, preview.positions[index + 0]);
+        maxY = std::max(maxY, preview.positions[index + 1]);
+        maxZ = std::max(maxZ, preview.positions[index + 2]);
+    }
+
+    preview.centerX = (minX + maxX) * 0.5f;
+    preview.centerY = (minY + maxY) * 0.5f;
+    preview.centerZ = (minZ + maxZ) * 0.5f;
+
+    float maxDistanceSq = 0.0f;
+    for (size_t index = 0; index < preview.positions.size(); index += 3)
+    {
+        const float dx = preview.positions[index + 0] - preview.centerX;
+        const float dy = preview.positions[index + 1] - preview.centerY;
+        const float dz = preview.positions[index + 2] - preview.centerZ;
+        maxDistanceSq = std::max(maxDistanceSq, (dx * dx) + (dy * dy) + (dz * dz));
+    }
+    preview.radius = std::max(0.5f, std::sqrt(maxDistanceSq));
+
+    bool needsGeneratedNormals = true;
+    for (size_t index = 0; index < preview.normals.size(); index += 3)
+    {
+        const float nx = preview.normals[index + 0];
+        const float ny = preview.normals[index + 1];
+        const float nz = preview.normals[index + 2];
+        if (std::fabs(nx) > 1e-4f || std::fabs(ny - 1.0f) > 1e-4f || std::fabs(nz) > 1e-4f)
+        {
+            needsGeneratedNormals = false;
+            break;
+        }
+    }
+
+    if (needsGeneratedNormals)
+    {
+        std::fill(preview.normals.begin(), preview.normals.end(), 0.0f);
+        for (size_t index = 0; index + 2 < preview.indices.size(); index += 3)
+        {
+            const uint32_t i0 = preview.indices[index + 0];
+            const uint32_t i1 = preview.indices[index + 1];
+            const uint32_t i2 = preview.indices[index + 2];
+
+            const float ax = preview.positions[static_cast<size_t>(i0) * 3 + 0];
+            const float ay = preview.positions[static_cast<size_t>(i0) * 3 + 1];
+            const float az = preview.positions[static_cast<size_t>(i0) * 3 + 2];
+            const float bx = preview.positions[static_cast<size_t>(i1) * 3 + 0];
+            const float by = preview.positions[static_cast<size_t>(i1) * 3 + 1];
+            const float bz = preview.positions[static_cast<size_t>(i1) * 3 + 2];
+            const float cx = preview.positions[static_cast<size_t>(i2) * 3 + 0];
+            const float cy = preview.positions[static_cast<size_t>(i2) * 3 + 1];
+            const float cz = preview.positions[static_cast<size_t>(i2) * 3 + 2];
+
+            const float ux = bx - ax;
+            const float uy = by - ay;
+            const float uz = bz - az;
+            const float vx = cx - ax;
+            const float vy = cy - ay;
+            const float vz = cz - az;
+
+            float nx = (uy * vz) - (uz * vy);
+            float ny = (uz * vx) - (ux * vz);
+            float nz = (ux * vy) - (uy * vx);
+            NormalizeVector(nx, ny, nz);
+
+            for (uint32_t vertex : {i0, i1, i2})
+            {
+                preview.normals[static_cast<size_t>(vertex) * 3 + 0] += nx;
+                preview.normals[static_cast<size_t>(vertex) * 3 + 1] += ny;
+                preview.normals[static_cast<size_t>(vertex) * 3 + 2] += nz;
+            }
+        }
+
+        for (size_t index = 0; index < preview.normals.size(); index += 3)
+            NormalizeVector(preview.normals[index + 0], preview.normals[index + 1], preview.normals[index + 2]);
+    }
+
+    std::wostringstream description;
+    description << L"Static mesh"
+                << L"\r\nVertices: " << preview.vertexCount
+                << L"\r\nTriangles: " << preview.triangleCount
+                << L"\r\nSubmeshes: " << meshFileHeader->total_meshes
+                << L"\r\nRadius: " << std::fixed << std::setprecision(2) << preview.radius;
+    preview.description = description.str();
+    return preview;
+}
+
 WadAssetPayload WadArchiveModel::ReadAssetPayload(const WadAsset& asset) const
 {
     WadAssetPayload payload{};
@@ -346,6 +612,7 @@ WadAssetPayload WadArchiveModel::ReadAssetPayload(const WadAsset& asset) const
             static_cast<const uint8_t*>(rf.data) + static_cast<size_t>(rf.size));
         payload.textureInfo = ExtractTextureInfo(payload.viewBytes);
         payload.imagePreview = ExtractTexturePreview(payload.viewBytes);
+        payload.meshPreview = ExtractMeshPreview(payload.viewBytes);
         RmidFree(&rf);
     }
 

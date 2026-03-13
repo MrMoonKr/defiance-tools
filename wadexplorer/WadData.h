@@ -30,6 +30,20 @@ struct WadTextureInfo
     bool isCubemap = false;
 };
 
+struct WadMeshPreview
+{
+    uint32_t vertexCount = 0;
+    uint32_t triangleCount = 0;
+    std::vector<float> positions;
+    std::vector<float> normals;
+    std::vector<uint32_t> indices;
+    float centerX = 0.0f;
+    float centerY = 0.0f;
+    float centerZ = 0.0f;
+    float radius = 1.0f;
+    std::wstring description;
+};
+
 
 struct WadAssetPayload
 {
@@ -41,6 +55,7 @@ struct WadAssetPayload
     uint16_t rmidReferenceCount = 0;
     std::optional<WadTextureInfo> textureInfo;
     std::optional<WadImagePreview> imagePreview;
+    std::optional<WadMeshPreview> meshPreview;
 };
 
 
@@ -97,6 +112,7 @@ private:
     static std::vector<uint8_t> ReadRawBytes(const WadAsset& asset);
     static std::optional<WadTextureInfo> ExtractTextureInfo(const std::vector<uint8_t>& bytes);
     static std::optional<WadImagePreview> ExtractTexturePreview(const std::vector<uint8_t>& bytes);
+    static std::optional<WadMeshPreview> ExtractMeshPreview(const std::vector<uint8_t>& bytes);
 
     std::filesystem::path m_rootPath;
     std::vector<LoadedWadFile> m_wadFiles;

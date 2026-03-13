@@ -8,3 +8,4 @@ defiance-tools.opensdf
 bin/
 build/
 /.venv
+/.cache
