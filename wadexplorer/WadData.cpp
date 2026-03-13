@@ -20,6 +20,47 @@ namespace
                                     (static_cast<uint32_t>('I') << 16) |
                                     (static_cast<uint32_t>('D') << 24);
 
+    struct SkiHeader
+    {
+        uint32_t total_materials;
+        uint32_t total_mesh_groups;
+        uint32_t mesh_group_table_offset;
+        uint32_t unk4;
+
+        uint32_t unk5;
+        uint32_t unk6;
+        uint32_t unk7;
+        uint32_t unk8;
+
+        uint32_t unk9;
+        uint32_t unk10;
+        uint32_t unk11;
+        uint32_t unk12;
+
+        uint64_t mesh_table_offset;
+        uint64_t mesh_material_ids_offset;
+        uint64_t material_table_offset;
+        uint64_t unk13;
+
+        uint32_t unk21;
+        uint32_t unk22;
+        uint32_t unk23;
+        uint32_t unk24;
+    };
+
+    struct SkiMeshGroupRecord
+    {
+        uint32_t total_meshes;
+        uint32_t unk2;
+        uint32_t unk3;
+        uint32_t unk4;
+
+        uint32_t unk5;
+        uint32_t unk6;
+        uint32_t unk7;
+        uint32_t unk8;
+    };
+
     std::vector<uint8_t> CropRgbaBuffer(
         const uint8_t* source,
         uint32_t sourceWidth,
@@ -116,6 +157,130 @@ namespace
             y /= length;
             z /= length;
         }
+    }
+
+    bool AppendMeshPreviewRange(
+        WadMeshPreview& preview,
+        const uint8_t* base,
+        size_t baseSize,
+        const mes_ski_mesh_record* meshRecords,
+        uint32_t meshStart,
+        uint32_t meshCount,
+        uint32_t& appendedMeshes)
+    {
+        for (uint32_t meshListIndex = 0; meshListIndex < meshCount; ++meshListIndex)
+        {
+            const uint32_t meshIndex = meshStart + meshListIndex;
+            const auto& meshRecord = meshRecords[meshIndex];
+            if (meshRecord.offset + sizeof(mes_ski_mesh_header) > baseSize)
+                continue;
+
+            const auto* meshHeader = reinterpret_cast<const mes_ski_mesh_header*>(base + meshRecord.offset);
+            if (meshHeader->num_vertices1 == 0 || meshHeader->num_indices1 < 3 || meshHeader->bytes_per_vertex == 0)
+                continue;
+
+            if (meshHeader->vertex_data_offset >= meshRecord.size || meshHeader->index_data_offset >= meshRecord.size)
+                continue;
+
+            const size_t vertexDataOffset = static_cast<size_t>(meshRecord.offset + meshHeader->vertex_data_offset);
+            const size_t indexDataOffset = static_cast<size_t>(meshRecord.offset + meshHeader->index_data_offset);
+            const size_t vertexBytes = static_cast<size_t>(meshHeader->num_vertices1) * meshHeader->bytes_per_vertex;
+            if (vertexDataOffset + vertexBytes > baseSize || indexDataOffset > baseSize)
+                continue;
+
+            const auto* vertexData = base + vertexDataOffset;
+            const auto* indexData = base + indexDataOffset;
+            const size_t recordIndexBytes = static_cast<size_t>(meshRecord.size - meshHeader->index_data_offset);
+            const size_t fileIndexBytes = baseSize - indexDataOffset;
+            const size_t availableIndexBytes = std::min(recordIndexBytes, fileIndexBytes);
+            const bool use32BitIndices =
+                availableIndexBytes >= static_cast<size_t>(meshHeader->num_indices1) * sizeof(uint32_t);
+            const bool use16BitIndices = !use32BitIndices &&
+                availableIndexBytes >= static_cast<size_t>(meshHeader->num_indices1) * sizeof(uint16_t);
+            if (!use32BitIndices && !use16BitIndices)
+                continue;
+
+            const uint32_t vertexOffset = preview.vertexCount;
+            preview.positions.reserve(preview.positions.size() + (static_cast<size_t>(meshHeader->num_vertices1) * 3));
+            preview.normals.reserve(preview.normals.size() + (static_cast<size_t>(meshHeader->num_vertices1) * 3));
+
+            for (uint32_t vertexIndex = 0; vertexIndex < meshHeader->num_vertices1; ++vertexIndex)
+            {
+                const auto* vertex = vertexData + (static_cast<size_t>(vertexIndex) * meshHeader->bytes_per_vertex);
+
+                float x = 0.0f;
+                float y = 0.0f;
+                float z = 0.0f;
+                size_t offset = 0;
+
+                if ((meshHeader->vertex_format & UNCOMPRESSED) != 0)
+                {
+                    x = *reinterpret_cast<const float*>(vertex + 0);
+                    y = *reinterpret_cast<const float*>(vertex + 4);
+                    z = *reinterpret_cast<const float*>(vertex + 8);
+                    offset = 12;
+                }
+                else
+                {
+                    x = HalfToFloat(*reinterpret_cast<const uint16_t*>(vertex + 0));
+                    y = HalfToFloat(*reinterpret_cast<const uint16_t*>(vertex + 2));
+                    z = HalfToFloat(*reinterpret_cast<const uint16_t*>(vertex + 4));
+                    offset = 8;
+                }
+
+                float nx = 0.0f;
+                float ny = 1.0f;
+                float nz = 0.0f;
+                if ((meshHeader->vertex_format & NORMAL) != 0 && offset + 12 <= meshHeader->bytes_per_vertex)
+                {
+                    nx = *reinterpret_cast<const float*>(vertex + offset + 0);
+                    ny = *reinterpret_cast<const float*>(vertex + offset + 4);
+                    nz = *reinterpret_cast<const float*>(vertex + offset + 8);
+                    NormalizeVector(nx, ny, nz);
+                }
+
+                preview.positions.push_back(x);
+                preview.positions.push_back(y);
+                preview.positions.push_back(z);
+                preview.normals.push_back(nx);
+                preview.normals.push_back(ny);
+                preview.normals.push_back(nz);
+            }
+
+            for (uint32_t faceIndex = 0; faceIndex + 2 < meshHeader->num_indices1; faceIndex += 3)
+            {
+                uint32_t v1 = 0;
+                uint32_t v2 = 0;
+                uint32_t v3 = 0;
+
+                if (use32BitIndices)
+                {
+                    const auto* face = reinterpret_cast<const mes_face_32*>(indexData);
+                    v1 = face[faceIndex / 3].v1;
+                    v2 = face[faceIndex / 3].v2;
+                    v3 = face[faceIndex / 3].v3;
+                }
+                else
+                {
+                    const auto* face = reinterpret_cast<const mes_face_16*>(indexData);
+                    v1 = face[faceIndex / 3].v1;
+                    v2 = face[faceIndex / 3].v2;
+                    v3 = face[faceIndex / 3].v3;
+                }
+
+                if (v1 >= meshHeader->num_vertices1 || v2 >= meshHeader->num_vertices1 || v3 >= meshHeader->num_vertices1)
+                    continue;
+
+                preview.indices.push_back(vertexOffset + v3);
+                preview.indices.push_back(vertexOffset + v2);
+                preview.indices.push_back(vertexOffset + v1);
+            }
+
+            preview.vertexCount += meshHeader->num_vertices1;
+            ++appendedMeshes;
+        }
+
+        return appendedMeshes != 0;
     }
 }
 
@@ -367,128 +532,53 @@ std::optional<WadMeshPreview> WadArchiveModel::ExtractMeshPreview(const std::vec
         return std::nullopt;
 
     const auto* header = reinterpret_cast<const rmid_header*>(bytes.data());
-    if (header->magic != kRmidMagic || header->type != RMID_TYPE_MES)
+    if (header->magic != kRmidMagic || (header->type != RMID_TYPE_MES && header->type != RMID_TYPE_SKI))
         return std::nullopt;
 
     const auto* base = bytes.data();
     const size_t baseSize = bytes.size();
-    const auto* meshFileHeader = reinterpret_cast<const mes_ski_header*>(base + sizeof(rmid_header));
-
-    if (meshFileHeader->mesh_table_offset + (static_cast<uint64_t>(meshFileHeader->total_meshes) * sizeof(mes_ski_mesh_record)) > baseSize)
-        return std::nullopt;
-
-    const auto* meshRecords = reinterpret_cast<const mes_ski_mesh_record*>(base + meshFileHeader->mesh_table_offset);
-
     WadMeshPreview preview{};
-    preview.description = L"Static mesh preview";
+    uint32_t appendedMeshes = 0;
+    std::wstring previewLabel = L"Static mesh";
 
-    for (uint32_t meshIndex = 0; meshIndex < meshFileHeader->total_meshes; ++meshIndex)
+    if (header->type == RMID_TYPE_MES)
     {
-        const auto& meshRecord = meshRecords[meshIndex];
-        if (meshRecord.offset + sizeof(mes_ski_mesh_header) > baseSize)
-            continue;
+        const auto* meshFileHeader = reinterpret_cast<const mes_ski_header*>(base + sizeof(rmid_header));
+        if (meshFileHeader->mesh_table_offset +
+                (static_cast<uint64_t>(meshFileHeader->total_meshes) * sizeof(mes_ski_mesh_record)) > baseSize)
+            return std::nullopt;
 
-        const auto* meshHeader = reinterpret_cast<const mes_ski_mesh_header*>(base + meshRecord.offset);
-        if (meshHeader->num_vertices1 == 0 || meshHeader->num_indices1 < 3 || meshHeader->bytes_per_vertex == 0)
-            continue;
+        const auto* meshRecords =
+            reinterpret_cast<const mes_ski_mesh_record*>(base + meshFileHeader->mesh_table_offset);
+        AppendMeshPreviewRange(preview, base, baseSize, meshRecords, 0, meshFileHeader->total_meshes, appendedMeshes);
+    }
+    else
+    {
+        if (bytes.size() < sizeof(rmid_header) + sizeof(SkiHeader))
+            return std::nullopt;
 
-        if (meshHeader->vertex_data_offset >= meshRecord.size || meshHeader->index_data_offset >= meshRecord.size)
-            continue;
+        const auto* skinHeader = reinterpret_cast<const SkiHeader*>(base + sizeof(rmid_header));
+        if (skinHeader->total_mesh_groups == 0)
+            return std::nullopt;
 
-        const size_t vertexDataOffset = static_cast<size_t>(meshRecord.offset + meshHeader->vertex_data_offset);
-        const size_t indexDataOffset = static_cast<size_t>(meshRecord.offset + meshHeader->index_data_offset);
-        const size_t vertexBytes = static_cast<size_t>(meshHeader->num_vertices1) * meshHeader->bytes_per_vertex;
-        if (vertexDataOffset + vertexBytes > baseSize || indexDataOffset > baseSize)
-            continue;
+        if (skinHeader->mesh_group_table_offset +
+                (static_cast<uint64_t>(skinHeader->total_mesh_groups) * sizeof(SkiMeshGroupRecord)) > baseSize)
+            return std::nullopt;
 
-        const auto* vertexData = base + vertexDataOffset;
-        const auto* indexData = base + indexDataOffset;
-        const size_t recordIndexBytes = static_cast<size_t>(meshRecord.size - meshHeader->index_data_offset);
-        const size_t fileIndexBytes = baseSize - indexDataOffset;
-        const size_t availableIndexBytes = std::min(recordIndexBytes, fileIndexBytes);
-        const bool use32BitIndices = availableIndexBytes >= static_cast<size_t>(meshHeader->num_indices1) * sizeof(uint32_t);
-        const bool use16BitIndices = !use32BitIndices &&
-            availableIndexBytes >= static_cast<size_t>(meshHeader->num_indices1) * sizeof(uint16_t);
-        if (!use32BitIndices && !use16BitIndices)
-            continue;
+        const auto* meshGroups =
+            reinterpret_cast<const SkiMeshGroupRecord*>(base + skinHeader->mesh_group_table_offset);
+        const uint32_t lodMeshCount = meshGroups[0].total_meshes;
+        if (lodMeshCount == 0)
+            return std::nullopt;
 
-        const uint32_t vertexOffset = preview.vertexCount;
-        preview.positions.reserve(preview.positions.size() + (static_cast<size_t>(meshHeader->num_vertices1) * 3));
-        preview.normals.reserve(preview.normals.size() + (static_cast<size_t>(meshHeader->num_vertices1) * 3));
+        if (skinHeader->mesh_table_offset +
+                (static_cast<uint64_t>(lodMeshCount) * sizeof(mes_ski_mesh_record)) > baseSize)
+            return std::nullopt;
 
-        for (uint32_t vertexIndex = 0; vertexIndex < meshHeader->num_vertices1; ++vertexIndex)
-        {
-            const auto* vertex = vertexData + (static_cast<size_t>(vertexIndex) * meshHeader->bytes_per_vertex);
-
-            float x = 0.0f;
-            float y = 0.0f;
-            float z = 0.0f;
-            size_t offset = 0;
-
-            if ((meshHeader->vertex_format & UNCOMPRESSED) != 0)
-            {
-                x = *reinterpret_cast<const float*>(vertex + 0);
-                y = *reinterpret_cast<const float*>(vertex + 4);
-                z = *reinterpret_cast<const float*>(vertex + 8);
-                offset = 12;
-            }
-            else
-            {
-                x = HalfToFloat(*reinterpret_cast<const uint16_t*>(vertex + 0));
-                y = HalfToFloat(*reinterpret_cast<const uint16_t*>(vertex + 2));
-                z = HalfToFloat(*reinterpret_cast<const uint16_t*>(vertex + 4));
-                offset = 8;
-            }
-
-            float nx = 0.0f;
-            float ny = 1.0f;
-            float nz = 0.0f;
-            if ((meshHeader->vertex_format & NORMAL) != 0 && offset + 12 <= meshHeader->bytes_per_vertex)
-            {
-                nx = *reinterpret_cast<const float*>(vertex + offset + 0);
-                ny = *reinterpret_cast<const float*>(vertex + offset + 4);
-                nz = *reinterpret_cast<const float*>(vertex + offset + 8);
-                NormalizeVector(nx, ny, nz);
-            }
-
-            preview.positions.push_back(x);
-            preview.positions.push_back(y);
-            preview.positions.push_back(z);
-            preview.normals.push_back(nx);
-            preview.normals.push_back(ny);
-            preview.normals.push_back(nz);
-        }
-
-        for (uint32_t faceIndex = 0; faceIndex + 2 < meshHeader->num_indices1; faceIndex += 3)
-        {
-            uint32_t v1 = 0;
-            uint32_t v2 = 0;
-            uint32_t v3 = 0;
-
-            if (use32BitIndices)
-            {
-                const auto* face = reinterpret_cast<const mes_face_32*>(indexData);
-                v1 = face[faceIndex / 3].v1;
-                v2 = face[faceIndex / 3].v2;
-                v3 = face[faceIndex / 3].v3;
-            }
-            else
-            {
-                const auto* face = reinterpret_cast<const mes_face_16*>(indexData);
-                v1 = face[faceIndex / 3].v1;
-                v2 = face[faceIndex / 3].v2;
-                v3 = face[faceIndex / 3].v3;
-            }
-
-            if (v1 >= meshHeader->num_vertices1 || v2 >= meshHeader->num_vertices1 || v3 >= meshHeader->num_vertices1)
-                continue;
-
-            preview.indices.push_back(vertexOffset + v3);
-            preview.indices.push_back(vertexOffset + v2);
-            preview.indices.push_back(vertexOffset + v1);
-        }
-
-        preview.vertexCount += meshHeader->num_vertices1;
+        const auto* meshRecords =
+            reinterpret_cast<const mes_ski_mesh_record*>(base + skinHeader->mesh_table_offset);
+        AppendMeshPreviewRange(preview, base, baseSize, meshRecords, 0, lodMeshCount, appendedMeshes);
+        previewLabel = L"Skin mesh (LOD 0)";
     }
 
     if (preview.positions.empty() || preview.indices.empty())
@@ -583,10 +673,10 @@ std::optional<WadMeshPreview> WadArchiveModel::ExtractMeshPreview(const std::vec
     }
 
     std::wostringstream description;
-    description << L"Static mesh"
+    description << previewLabel
                 << L"\r\nVertices: " << preview.vertexCount
                 << L"\r\nTriangles: " << preview.triangleCount
-                << L"\r\nSubmeshes: " << meshFileHeader->total_meshes
+                << L"\r\nSubmeshes: " << appendedMeshes
                 << L"\r\nRadius: " << std::fixed << std::setprecision(2) << preview.radius;
     preview.description = description.str();
     return preview;
