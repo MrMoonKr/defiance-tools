@@ -1,0 +1,254 @@
+ /* (28-Aug-2016) [Tab/Indent: 8/8][Line/Box: 80/74]              (Resource.rc) *
+********************************************************************************
+|                                                                              |
+|                    Authors: Robert Tausworthe, David Nash                    |
+|                                                                              |
+===============================================================================*
+
+    Program resource definitions for the FilePrintPreview sample program.
+
+*******************************************************************************/
+
+#include "resource.h"
+#include "windows.h"
+
+/*============================================================================*/
+
+  // English (United States) resources
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/*============================================================================*/
+
+  // RT_MANIFEST
+1       RT_MANIFEST                     "../src/res/SystemDPI.manifest"
+
+/*============================================================================*/
+
+  // Main Menu
+IDW_MAIN MENU
+{
+    POPUP "&File"
+    {
+        MENUITEM "New\tCtrl+N",                 IDM_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            IDM_FILE_OPEN
+        MENUITEM "&Save\tCtrl+S",               IDM_FILE_SAVE
+        MENUITEM "Save &As...",                 IDM_FILE_SAVEAS
+        MENUITEM SEPARATOR
+        MENUITEM "&Print...\tCtrl+P",           IDM_FILE_PRINT
+        MENUITEM "Print P&review",              IDM_FILE_PREVIEW
+        MENUITEM "Print Setup",                 IDM_FILE_PRINTSETUP
+        MENUITEM SEPARATOR
+        MENUITEM "Recent Files",                IDW_FILE_MRU_FILE1, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit\tAlt+F4",               IDM_FILE_EXIT
+    }
+    POPUP "&Edit"
+    {
+        MENUITEM "Undo\tCtrl+Z",                IDM_EDIT_UNDO
+        MENUITEM "Redo\tCtrl+Y",                IDM_EDIT_REDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cut\tCtrl+X",                 IDM_EDIT_CUT
+        MENUITEM "Copy\tCtrl+C",                IDM_EDIT_COPY
+        MENUITEM "Paste\tCtrl+V",               IDM_EDIT_PASTE
+        MENUITEM "Delete\tDel",                 IDM_EDIT_DELETE
+    }
+    POPUP "&View"
+    {
+        MENUITEM "&Tool Bar",                   IDW_VIEW_TOOLBAR, CHECKED
+        MENUITEM "&Status Bar",                 IDW_VIEW_STATUSBAR, CHECKED
+    }
+    POPUP "&Options"
+    {
+        MENUITEM "Font",                        IDM_OPTIONS_FONT
+        MENUITEM SEPARATOR
+        MENUITEM "No Wrap",                     IDM_WRAP_NONE
+        MENUITEM "Window Wrap",                 IDM_WRAP_WINDOW
+        MENUITEM "Printer Wrap",                IDM_WRAP_PRINTER
+    }
+    POPUP "&Help"
+    {
+        MENUITEM "&About\tF1",                  IDM_HELP_ABOUT
+    }
+}
+
+/*============================================================================*/
+
+  // Icons: The icon with lowest ID value is placed first to ensure the
+  // application icon remains consistent on all systems.
+IDW_MAIN                ICON                    "../src/res/PrintPreview.ico"
+IDI_PRINTPREVIEW        ICON                    "../src/res/Print Preview.ico"
+IDI_QUICKPRINT          ICON                    "../src/res/Quick Print.ico"
+IDI_PRINT               ICON                    "../src/res/Print.ico"
+IDI_FONT_OPTION         ICON                    "../src/res/FontsS.ico"
+IDI_CHECKBOX_OFF        ICON                    "../src/res/CheckBoxOff.ico"
+
+/*============================================================================*/
+
+  // Bitmaps
+IDW_MAIN                BITMAP                  "../src/res/toolbar.bmp"
+IDB_PREVIEW_FIRST       BITMAP                  "../src/res/recfirst.bmp"
+IDB_PREVIEW_PREV        BITMAP                  "../src/res/recprev.bmp"
+IDB_PREVIEW_NEXT        BITMAP                  "../src/res/recnext.bmp"
+IDB_PREVIEW_LAST        BITMAP                  "../src/res/reclast.bmp"
+
+/*============================================================================*/
+
+  // About Dialog
+IDW_ABOUT DIALOGEX 0, 0, 186, 109
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE |
+    WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 8, "MS Shell Dlg", 400, 0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,68,60,50,14
+    CTEXT           "FilePrintPreview Program",IDC_STATIC,43,22,99,8
+    ICON            IDW_MAIN,0,4,4,20,20
+    CTEXT           "",IDC_STATIC1,53,32,80,8
+    CTEXT           "",IDC_STATIC2,53,42,80,8
+END
+
+/*============================================================================*/
+
+  // PrintPreview dialog
+IDD_PRINTPREVIEW DIALOGEX 0, 0, PVW_DLG_WIDTH, PVW_DLG_HEIGHT
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_POPUP
+     | DS_MODALFRAME | WS_CLIPCHILDREN
+EXSTYLE WS_EX_CLIENTEDGE
+FONT 8, "MS Shell Dlg", 400, 0
+{
+    PUSHBUTTON      "Print",     IDC_PREVIEW_PRINT,     5, 3, 45, 15
+    LTEXT           "Page: ",    IDC_STATIC,          105, 6, 20, 15
+    PUSHBUTTON      "1st Page",  IDC_PREVIEW_FIRST,   130, 3, 15, 15,
+                                    BS_BITMAP
+    PUSHBUTTON      "Prev Page", IDC_PREVIEW_PREV,    150, 3, 15, 15,
+                                    BS_BITMAP
+    EDITTEXT                     IDC_PREVIEW_PAGE,    170, 4, 20, 13,
+                                    ES_RIGHT | ES_NUMBER | WS_BORDER |
+                                    WS_TABSTOP
+    CTEXT           "of (nn)",   IDC_PREVIEW_OFPAGES, 195, 6, 30, 15
+    PUSHBUTTON      "Next Page", IDC_PREVIEW_NEXT,    230, 3, 15, 15,
+                                    BS_BITMAP
+    PUSHBUTTON      "Last Page", IDC_PREVIEW_LAST,    250, 3, 15, 15,
+                                    BS_BITMAP
+    RTEXT           "Scale:",    IDC_STATIC,        270, 6, 25, 15
+    COMBOBOX                    IDC_PREVIEW_ZOOMCOMBO,  300, 3, 45, 150,
+                                    CBS_DROPDOWNLIST | CBS_HASSTRINGS |
+                                    WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "Close",     IDC_PREVIEW_CLOSE,   350, 3, 45, 15
+    PUSHBUTTON      "Help",      IDC_PREVIEW_HELP,    400, 3, 45, 15
+    CONTROL         "",          IDC_PREVIEW_PANE,    "PreviewPane",
+                                    WS_TABSTOP | SBS_HORZ | SBS_VERT,
+                                    0, PVW_TB_HEIGHT, PVW_DLG_WIDTH,
+                                    (PVW_DLG_HEIGHT - PVW_TB_HEIGHT)
+}
+
+/*============================================================================*/
+
+  // Accelerator Keys
+IDW_MAIN ACCELERATORS
+{
+    "N",            IDM_FILE_NEW,           VIRTKEY, CONTROL, NOINVERT
+    "O",            IDM_FILE_OPEN,          VIRTKEY, CONTROL, NOINVERT
+    "P",            IDM_FILE_PRINT,         VIRTKEY, CONTROL, NOINVERT
+    "R",            IDM_FILE_PREVIEW,       VIRTKEY, CONTROL, NOINVERT
+    "S",            IDM_FILE_SAVE,          VIRTKEY, CONTROL, NOINVERT
+    "C",            IDM_EDIT_COPY,          VIRTKEY, CONTROL, NOINVERT
+    "X",            IDM_EDIT_CUT,           VIRTKEY, CONTROL, NOINVERT
+    "V",            IDM_EDIT_PASTE,         VIRTKEY, CONTROL, NOINVERT
+    "Z",            IDM_EDIT_UNDO,          VIRTKEY, CONTROL, NOINVERT
+    "Y",            IDM_EDIT_REDO,          VIRTKEY, CONTROL, NOINVERT
+}
+
+/*============================================================================*/
+
+  // String Tables
+STRINGTABLE
+{
+    IDW_MAIN                "File Print Preview Program"
+    IDW_INDICATOR_CAPS      "CAP"
+    IDW_INDICATOR_NUM       "NUM"
+    IDW_INDICATOR_SCRL      "SCRL"
+    IDW_READY               "Ready"
+    IDOK                    "Accept current dialog values"
+    IDCANCEL                "Close dialog, ignore entered values"
+}
+
+STRINGTABLE
+{
+    IDM_FILE_NEW             "Create a New Document"
+    IDM_FILE_OPEN            "Open Existing Document"
+    IDM_FILE_SAVE            "Save the Document"
+    IDM_FILE_SAVEAS          "Save the Document with a new name"
+    IDM_FILE_PREVIEW         "Preview the print job before printing"
+    IDM_FILE_PRINTSETUP      "Choose the printer and page settings"
+    IDM_FILE_PRINT           "Print the Document"
+    IDM_FILE_QUICKPRINT      "Print with the current print and page settings"
+    IDM_FILE_EXIT            "End the Program"
+}
+
+STRINGTABLE
+{
+    IDM_EDIT_UNDO            "Undo the last action"
+    IDM_EDIT_REDO            "Redo the previously undone action"
+    IDM_EDIT_CUT             "Cut the Selected Contents to the Clipboard"
+    IDM_EDIT_COPY            "Copy the Selected Contents to the Clipboard"
+    IDM_EDIT_PASTE           "Paste the Clipboard Contents to the Document"
+    IDM_EDIT_DELETE          "Erase the selected Contents"
+    IDW_VIEW_TOOLBAR         "Show or hide the tool bar"
+    IDW_VIEW_STATUSBAR       "Show or hide the status bar"
+}
+
+STRINGTABLE
+{
+    IDM_HELP_ABOUT           "Display Information about this program"
+}
+
+STRINGTABLE
+{
+    SC_CLOSE                "Close the Window"
+    SC_MAXIMIZE             "Maximize the Window"
+    SC_MINIMIZE             "Minimize the Window"
+    SC_MOVE                 "Move the Window"
+    SC_NEXTWINDOW           "Select Next Window"
+    SC_PREVWINDOW           "Select Previous Window"
+    SC_RESTORE              "Restore the Window"
+    SC_SIZE                 "Resize the Window"
+}
+
+STRINGTABLE
+{
+    IDW_FILE_MRU_FILE1       "Open this document"
+    IDW_FILE_MRU_FILE2       "Open this document"
+    IDW_FILE_MRU_FILE3       "Open this document"
+    IDW_FILE_MRU_FILE4       "Open this document"
+    IDW_FILE_MRU_FILE5       "Open this document"
+}
+
+STRINGTABLE
+{
+    IDD_PRINTPREVIEW         "Print preview window"
+    IDC_PREVIEW_PRINT        "Print the document"
+    IDC_PREVIEW_PAGE         "Current page or Go to page"
+    IDC_PREVIEW_FIRST        "Display the first page of the document"
+    IDC_PREVIEW_PREV         "Display the previousl page of the document"
+    IDC_PREVIEW_NEXT         "Display the next page of the document"
+    IDC_PREVIEW_LAST         "Display the last page of the document"
+    IDC_PREVIEW_CLOSE        "Close the preview window"
+    IDC_PREVIEW_PANE         "Print preview window"
+    IDC_PREVIEW_HELP         "Display help topics"
+    IDC_PREVIEW_ZOOMCOMBO    "Select Print Preview scaling"
+}
+
+STRINGTABLE
+{
+    IDM_OPTIONS_FONT         "Change the displayed font."
+    IDM_WRAP_NONE            "Do not wrap long lines."
+    IDM_WRAP_WINDOW          "Wrap lines longer than the window width."
+    IDM_WRAP_PRINTER         "Wrap lines longer than the printer width."
+}
+/*----------------------------------------------------------------------------*/
+#endif    // English (United States) resources
+
+

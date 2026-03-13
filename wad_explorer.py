@@ -358,7 +358,7 @@ class WadParser:
             if len(header_data) != WAD_HEADER_STRUCT.size or header_data[:4] != WAD_MAGIC:
                 raise ValueError(f"{wad_path} is not a valid WAD file.")
 
-            _, _, total_records, _, _, _, _, _ = WAD_HEADER_STRUCT.unpack(header_data)
+            _, _, total_records, _, _, _, _, _ = WAD_HEADER_STRUCT.unpack(header_data) # "<8I"
             next_offset = file_obj.tell()
 
             while len(records) < total_records:
@@ -366,7 +366,7 @@ class WadParser:
                 index_data = file_obj.read(WAD_INDEX_HEADER_STRUCT.size)
                 if len(index_data) != WAD_INDEX_HEADER_STRUCT.size:
                     raise ValueError(f"Unexpected EOF while reading {wad_path}.")
-                record_count, next_header_offset, _, _ = WAD_INDEX_HEADER_STRUCT.unpack(index_data)
+                record_count, next_header_offset, _, _ = WAD_INDEX_HEADER_STRUCT.unpack(index_data) # "<4I"
 
                 for _ in range(record_count):
                     raw_record = file_obj.read(WAD_INDEX_RECORD_STRUCT.size)
@@ -380,7 +380,7 @@ class WadParser:
                         modified_time,
                         asset_type,
                         _,
-                    ) = WAD_INDEX_RECORD_STRUCT.unpack(raw_record)
+                    ) = WAD_INDEX_RECORD_STRUCT.unpack(raw_record) # "<IIIIQII"
                     name = read_c_string(file_obj, name_offset)
                     records.append(
                         WadRecord(
@@ -406,7 +406,7 @@ class WadParser:
 def parse_rmid_header(data: bytes, offset: int = 0) -> Optional[RmidHeaderInfo]:
     if len(data) < offset + RMID_HEADER_STRUCT.size:
         return None
-    asset_id, version, num_references, asset_type, magic = RMID_HEADER_STRUCT.unpack_from(
+    asset_id, version, num_references, asset_type, magic = RMID_HEADER_STRUCT.unpack_from( #"<IIHHI"
         data, offset
     )
     return RmidHeaderInfo(

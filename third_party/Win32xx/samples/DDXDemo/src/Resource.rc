@@ -1,0 +1,376 @@
+/* (20-Oct-2024) [Tab/Indent: 8/8][Line/Box: 80/74]              (Resource.rc) *
+********************************************************************************
+|                                                                              |
+|                      Author: Robert C. Tausworthe, 2020                      |
+|                                                                              |
+===============================================================================*
+
+    Contents Description: Application resources file for a this DDXDemo
+    application. Adapted to use Win32++ Windows interface classes.
+
+    Acknowledgement: The author would like to thank and acknowledge the advice,
+    critical review, insight, and assistance provided by David Nash in the
+    development of this work.
+
+******************************************************************************/
+
+// Microsoft Visual C++ generated resource script.
+//
+
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_MANIFEST
+//
+
+1                      RT_MANIFEST            "../src/res/PerMonitorV2.manifest"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+  // Main Menu
+IDW_MAIN MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "E&xit\tAlt+F4",               IDM_FILE_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "Undo\tCtrl+Z",                IDM_EDIT_UNDO
+        MENUITEM "Redo\tCtrl+Y",                IDM_EDIT_REDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cut\tCtrl+X",                 IDM_EDIT_CUT
+        MENUITEM "Copy\tCtrl+C",                IDM_EDIT_COPY
+        MENUITEM "Paste\tCtrl+V",               IDM_EDIT_PASTE
+        MENUITEM "Delete\tDel",                 IDM_EDIT_DELETE
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Tool Bar",                   IDW_VIEW_TOOLBAR, CHECKED
+        MENUITEM "&Status Bar",                 IDW_VIEW_STATUSBAR, CHECKED
+    END
+    POPUP "&Select"
+    BEGIN
+        MENUITEM "Radio A",                     IDC_RADIO_A
+        MENUITEM "Radio B",                     IDC_RADIO_B
+        MENUITEM "Radio C",                     IDC_RADIO_C
+        MENUITEM SEPARATOR
+        MENUITEM "Check A",                     IDC_CHECK_A
+        MENUITEM "Check B",                     IDC_CHECK_B
+        MENUITEM "Check C",                     IDC_CHECK_C
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About\tF1",                  IDW_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDW_MAIN                ICON                    "../src/res/Form.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_ROSE_BITMAP         BITMAP                  "../src/res/moondance.bmp"
+IDB_TOOLBAR16           BITMAP                  "../src/res/Toolbar16.bmp"
+IDW_MAIN                BITMAP                  "../src/res/Toolbar24.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+  // Main Dialog: the CView form
+IDD_MAIN_DIALOG DIALOGEX 0, 0, 400, 368
+STYLE /*DS_SHELLFONT |*/ WS_VISIBLE | WS_CHILDWINDOW
+FONT 8, "Courier", 0, 0
+BEGIN
+    EDITTEXT    IDC_EDIT_BYTE, 90, 20, 15, 10, WS_GROUP | NOT WS_BORDER |
+                    ES_NUMBER | ES_RIGHT, WS_EX_STATICEDGE
+    LTEXT       " BYTE ", IDC_STATIC, 110, 20, 40, 10, SS_LEFT
+    EDITTEXT    IDC_EDIT_SHORT, 75, 40, 30, 10, NOT WS_BORDER | ES_RIGHT,
+                    WS_EX_STATICEDGE
+    LTEXT       " short ", IDC_STATIC, 110, 40, 40, 10, SS_LEFT
+    EDITTEXT    IDC_EDIT_INT, 50, 60, 55, 10, NOT WS_BORDER | ES_RIGHT,
+                    WS_EX_STATICEDGE
+    LTEXT       " int ", IDC_STATIC, 110, 60, 40, 10, SS_LEFT
+    EDITTEXT    IDC_EDIT_UINT, 50, 80, 55, 10, NOT WS_BORDER | ES_NUMBER |
+                    ES_RIGHT, WS_EX_STATICEDGE
+    LTEXT       " UINT ", IDC_STATIC, 110, 80, 40, 10, SS_LEFT
+    EDITTEXT    IDC_EDIT_LONG, 50, 100, 55, 10, NOT WS_BORDER | ES_RIGHT,
+                    ES_NUMBER | WS_EX_STATICEDGE
+    LTEXT       " long ", IDC_STATIC, 110, 100, 40, 10, SS_LEFT
+    EDITTEXT    IDC_EDIT_DWORD, 50, 120, 55, 10, NOT WS_BORDER | ES_NUMBER |
+                    ES_RIGHT, WS_EX_STATICEDGE
+    LTEXT       " DWORD ", IDC_STATIC, 110, 120, 40, 10, SS_LEFT
+    EDITTEXT    IDC_EDIT_FLOAT, 15, 140, 90, 10, NOT WS_BORDER | ES_RIGHT,
+                    WS_EX_STATICEDGE
+    LTEXT       " float ", IDC_STATIC, 110, 140, 40, 10, SS_LEFT
+    EDITTEXT    IDC_EDIT_DOUBLE, 15, 160, 90, 10, NOT WS_BORDER | ES_RIGHT,
+                    WS_EX_STATICEDGE
+    LTEXT       " double ", IDC_STATIC, 110, 160, 40, 10, SS_LEFT
+    EDITTEXT        IDC_EDIT_LPWSTR, 15, 180, 135, 10, NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT    IDC_EDIT_CSTRING, 15, 200, 135, 35, WS_GROUP | NOT WS_BORDER |
+                    ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_MULTILINE |
+                    ES_WANTRETURN, WS_EX_STATICEDGE
+    CONTROL     "Rich edit box", IDC_EDIT_RICHEDIT, "RichEdit50W" ,
+                    WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL | ES_MULTILINE |
+                    ES_WANTRETURN, 15, 240, 135, 35
+    LISTBOX     IDC_LISTBOX, 15, 280, 135, 70, WS_GROUP | WS_TABSTOP |
+                    WS_VSCROLL | NOT WS_BORDER | LBS_NOINTEGRALHEIGHT |
+                    LBS_SORT | LBS_NOTIFY
+    CONTROL     "", IDC_SLIDER, "msctls_trackbar32", WS_TABSTOP |
+                    TBS_NOTICKS | TBS_BOTH, 185, 15, 135, 15
+    CONTROL     "", IDC_PROGRESSBAR, "msctls_progress32",
+                    WS_TABSTOP | PBS_SMOOTH, 185, 45, 135, 14
+    SCROLLBAR   IDC_SCROLLBAR, 185, 70, 135, 14, SBS_HORZ | WS_TABSTOP
+    COMBOBOX        IDC_COMBOBOX, 185, 95, 135, 150, CBS_DROPDOWN |
+                    CBS_HASSTRINGS | WS_TABSTOP | WS_VSCROLL
+    AUTORADIOBUTTON "Radio_A", IDC_RADIO_A, 190, 125, 48, 10, WS_GROUP |
+                        BS_NOTIFY
+    AUTORADIOBUTTON "Radio_B", IDC_RADIO_B, 190, 140, 48, 10, BS_NOTIFY
+    AUTORADIOBUTTON "Radio_C", IDC_RADIO_C, 190, 155, 48, 10, BS_NOTIFY
+    AUTOCHECKBOX    "Check Box A", IDC_CHECK_A, 190, 180, 55, 10,
+                        WS_GROUP | WS_TABSTOP | BS_NOTIFY
+    AUTOCHECKBOX    "Check Box B", IDC_CHECK_B, 190, 195, 55, 10, WS_GROUP |
+                        WS_TABSTOP | BS_NOTIFY
+    AUTOCHECKBOX    "Check Box C", IDC_CHECK_C, 190, 210, 55, 10, WS_GROUP |
+                        WS_TABSTOP | BS_NOTIFY
+    CONTROL     "", IDC_DATE_TIME, "SysDateTimePick32", WS_GROUP |
+                    WS_TABSTOP | DTS_TIMEFORMAT , 190, 230, 100, 15
+    CONTROL     "", IDC_CALENDAR, "SysMonthCal32", WS_TABSTOP |
+                    MCS_NOTODAY, 175, 250, 127, 108
+    PUSHBUTTON  "PUSH ME", IDC_PUSH_ME_BUTTON, 330, 15, 50, 16,
+                    WS_GROUP | WS_TABSTOP | BS_OWNERDRAW
+    PUSHBUTTON  "STATUS", IDOK, 330, 35, 50, 16,
+                    WS_GROUP | WS_TABSTOP | BS_OWNERDRAW
+    CONTROL     IDB_ROSE_BITMAP, IDC_ROSE_BITMAP, "Static", WS_TABSTOP |
+                    SS_BITMAP | SS_NOTIFY, 395, 10, 64, 59
+    GROUPBOX    "  Status Window  ", IDC_STATUS_GROUP, 325, 80, 135, 265,
+                    BS_CENTER
+    LTEXT       "Actions are displayed here", IDC_EDIT_STATUS,
+                    335, 95, 120, 245, SS_LEFT | SS_NOTIFY
+END
+
+
+  // About Dialog
+IDW_ABOUT DIALOGEX 0, 0, 186, 109
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 8, "MS Shell Dlg", 400, 0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,68,60,50,14
+    CTEXT           "DDX/DDV Demo Application",IDC_STATIC,43,22,99,8
+    ICON            IDW_MAIN,0,4,4,20,20
+    CTEXT           "",IDC_STATIC1,53,32,80,8
+    CTEXT           "",IDC_STATIC2,53,42,80,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDW_MAIN ACCELERATORS
+BEGIN
+    "N",            IDM_FILE_NEW,           VIRTKEY, CONTROL
+    "O",            IDM_FILE_OPEN,          VIRTKEY, CONTROL
+    "P",            IDM_FILE_PRINT,         VIRTKEY, CONTROL
+    "S",            IDM_FILE_SAVE,          VIRTKEY, CONTROL
+    "C",            IDM_EDIT_COPY,          VIRTKEY, CONTROL
+    "X",            IDM_EDIT_CUT,           VIRTKEY, CONTROL
+    "V",            IDM_EDIT_PASTE,         VIRTKEY, CONTROL
+    "Z",            IDM_EDIT_UNDO,          VIRTKEY, CONTROL
+    "Y",            IDM_EDIT_REDO,          VIRTKEY, CONTROL
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_MAIN_DIALOG, DIALOG
+    BEGIN
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_MAIN_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+  // Standard resource ID messages
+STRINGTABLE
+BEGIN
+    IDW_MAIN                "DDX/DDV Demo"
+    IDW_ABOUT               "Display Information about this program"
+    IDW_VIEW_TOOLBAR        "Show or hide the tool bar"
+    IDW_VIEW_STATUSBAR      "Show or hide the status bar"
+    IDW_READY               "Ready"
+    IDW_INDICATOR_CAPS      "CAP"
+    IDW_INDICATOR_NUM       "NUM"
+    IDW_INDICATOR_SCRL      "SCRL"
+END
+
+  // Menu selection messages
+STRINGTABLE
+BEGIN
+    IDM_FILE_NEW            "Create a New Document"
+    IDM_FILE_OPEN           "Open Existing Document"
+    IDM_FILE_SAVE           "Save the Document"
+    IDM_FILE_SAVEAS         "Save the Document with a new name"
+    IDM_FILE_PRINT          "Print the Document"
+    IDM_FILE_EXIT           "End the Program"
+    IDM_EDIT_UNDO           "Undo the last action"
+    IDM_EDIT_REDO           "Redo the previously undone action"
+    IDM_EDIT_CUT            "Cut the Selected Contents to the Clipboard"
+    IDM_EDIT_COPY           "Copy the Selected Contents to the Clipboard"
+    IDM_EDIT_PASTE          "Paste the Clipboard Contents to the Document"
+    IDM_EDIT_DELETE         "Erase the selected Contents"
+END
+
+  // Tool Tips Text
+STRINGTABLE
+BEGIN
+    IDOK                    "Hint for STATUS button: Collect and show status."
+    IDC_RADIO_A             "Hint for Radio Button A: Click to select."
+    IDC_RADIO_B             "Hint for Radio Button B: Click to select."
+    IDC_RADIO_C             "Hint for Radio Button C: Click to select."
+    IDC_CHECK_A             "Hint for Check A: Check or uncheck."
+    IDC_CHECK_B             "Hint for Check B: Check or uncheck."
+    IDC_CHECK_C             "Hint for Check C: Check or uncheck."
+    IDD_MAIN_DIALOG         "Hint for Main Dialog: Does not display."
+    IDC_EDIT_BYTE           "Hint for byte: Enter one byte."
+    IDC_EDIT_SHORT          "Hint for short: Enter short integer."
+    IDC_EDIT_INT            "Hint for int: Enter integer."
+    IDC_EDIT_UINT           "Hint for UINT: Enter unsigned integer."
+    IDC_EDIT_LONG           "Hint for long: Enter long integer."
+    IDC_EDIT_DWORD          "Hint for DWORD: Enter double word integer."
+    IDC_EDIT_FLOAT          "Hint for float: Enter floating point number."
+    IDC_EDIT_DOUBLE         "Hint for double: Enter double precision floating point number."
+    IDC_EDIT_LPWSTR         "Hint for LPWSTR: Enter string characters."
+    IDC_EDIT_CSTRING        "Hint for Edit Box: Enter text here."
+    IDC_EDIT_RICHEDIT       "Hint for Rich Edit: Enter text here."
+    IDC_EDIT_STATUS         "Hint for Status area: Display status of controls."
+    IDC_LISTBOX             "Hint for List Box entries: Select one."
+    IDC_SLIDER              "Hint for slider: click or slide thumb to value."
+    IDC_PROGRESSBAR         "Hint for progressbar: this shows progress."
+    IDC_SCROLLBAR           "Hint for scrollbar: click or slide thumb to value."
+    IDC_COMBOBOX            "Hint for combo box: choose an entry."
+    IDC_DATE_TIME           "Hint for date and time: choose a date and time."
+    IDC_CALENDAR            "Hint for calendar: choose a date."
+    IDC_STATUS_GROUP        "Hint for Status Group: This tool tip does not display."
+    IDC_PUSH_ME_BUTTON      "Hint for Button: Push to see status."
+    IDC_ROSE_BITMAP         "Hint for Rose Bitmap: Push to see rose variety."
+END
+
+  // Standard frame messages
+STRINGTABLE
+BEGIN
+    SC_CLOSE                "Close the Window"
+    SC_MAXIMIZE             "Maximize the Window"
+    SC_MINIMIZE             "Minimize the Window"
+    SC_MOVE                 "Move the Window"
+    SC_NEXTWINDOW           "Select Next Window"
+    SC_PREVWINDOW           "Select Previous Window"
+    SC_RESTORE              "Restore the Window"
+    SC_SIZE                 "Resize the Window"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

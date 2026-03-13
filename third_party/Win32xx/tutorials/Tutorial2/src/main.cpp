@@ -1,0 +1,55 @@
+///////////////////////////////////
+// main.cpp
+
+// Note:
+//  * Add the Win32++\include  directory to project's additional include directories.
+
+#include "wxx_wincore.h"
+
+
+//////////////////////////////////////////
+// CView is the application's main window.
+class CView : public CWnd
+{
+public:
+    CView() = default;
+    virtual void OnDestroy() override { PostQuitMessage(0); } // End the program.
+    virtual ~CView() override = default;
+};
+
+
+////////////////////////////////////////////////////
+// A class that inherits from CWinApp.
+// It is used to run the application's message loop.
+class CSimpleApp : public CWinApp
+{
+public:
+    CSimpleApp() = default;
+    virtual ~CSimpleApp() override = default;
+
+protected:
+    virtual BOOL InitInstance() override;
+
+private:
+    CView m_view;
+};
+
+// Called when the application starts.
+BOOL CSimpleApp::InitInstance()
+{
+    // Create the window.
+    m_view.Create();
+
+    return TRUE;
+}
+
+
+// WinMain is the program's entry point. The program starts here.
+int WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
+{
+    // Start Win32++.
+    CSimpleApp theApp;
+
+    // Run the application.
+    return theApp.Run();
+}

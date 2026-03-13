@@ -1,0 +1,27 @@
+Picture Example
+===============
+This example uses the IPicture interface to load and display a graphic 
+image.
+
+The image is displayed with scrollbars if required. The image is centered in
+in the view window if the view window is large than the image.
+
+
+Features demonstrated in this example
+=====================================
+* Use of CFrame to display the window frame.
+* Use of the IPicture interface to load and render the picture.
+* Automatic resizing of the frame to accommodate the picture size when loaded.
+* Inheriting the image view from CScrollView to display scroll bars.
+* Use of file open and file save common dialogs.
+* Use of a Most Recently Used (MRU) List in the File menu.
+* Use of drag and drop.
+* Use of OnIdle to dynamically update the toolbar buttons.
+* Use of OnMenuUpdate to dynamically update the menu items.
+* Use of a user defined message to pass information to a parent window.
+
+
+About iPicture.
+iPicture manages a picture object and its properties. It can work with bitmaps,
+icons, and metafiles. The program can also load gif and jpeg files, but
+these will be converted to bitmaps.

@@ -1,0 +1,130 @@
+/////////////////////////////
+// Node.cpp
+//
+
+
+#include "stdafx.h"
+#include <cmath>
+#include <math.h>
+#include <vector>
+#include <map>
+#include "enums.h"
+#include "Table.h"
+#include "Node.h"
+
+namespace Calc
+{
+
+    ////////////////////////////////////
+    // Node_Number function definitions.
+    //
+    Node_Number::Node_Number(double number) : m_number(number)
+    {
+    }
+
+    double Node_Number::Calc() const
+    {
+        return m_number;
+    }
+
+    ////////////////////////////////////
+    // Node_Branch function definitions.
+    //
+    Node_Branch::~Node_Branch()
+    {
+        // Delete each leaf node.
+        for (unsigned u = 0; u < m_leaves.size(); ++u)
+            delete m_leaves[u];
+    }
+
+    double Node_Branch::Calc() const
+    {
+        double Value = 0.0;
+        for (unsigned u = 0; u < m_leaves.size(); ++u)
+        {
+            double nodeVal = m_leaves[u]->Calc();
+            switch (m_tokens[u])
+            {
+            case tPlus:
+                Value += nodeVal;
+                break;
+
+            case tMinus:
+                Value -= nodeVal;
+                break;
+
+            case tMultiply:
+                Value *= nodeVal;
+                break;
+
+            case tDivide:
+                Value /= nodeVal;
+                break;
+
+            case tPower:
+                Value = pow(Value, nodeVal);
+                break;
+            default:
+                break;
+            }
+        }
+        return Value;
+    }
+
+    //////////////////////////////////////
+    // Node_Variable function definitions.
+    //
+    Node_Variable::Node_Variable(SymbolTable& symTab, const CString& symbol)
+        : m_symTab(symTab), m_symbol(symbol)
+    {
+    }
+
+    double Node_Variable::Calc() const
+    {
+        return m_symTab.GetValue(m_symbol);
+    }
+
+    ////////////////////////////////////
+    // Node_Assign function definitions.
+    //
+    Node_Assign::Node_Assign(Node* pNode, SymbolTable& symTab, const CString& symbol)
+        : m_node(pNode), m_symTab(symTab), m_symbol(symbol)
+    {
+    }
+
+    Node_Assign::~Node_Assign()
+    {
+        delete m_node;
+    }
+
+    double Node_Assign::Calc() const
+    {
+        double var = m_node->Calc();
+        m_symTab.SetValue(m_symbol, var);
+        return var;
+    }
+
+    //////////////////////////////////////
+    // Node_Function function definitions.
+    //
+    Node_Function::Node_Function(CString funName, Node* pnode)
+        : m_funcName(funName), m_pNode(pnode)
+    {
+    }
+
+    Node_Function::~Node_Function()
+    {
+        //delete our node tree
+        delete m_pNode;
+    }
+
+    double Node_Function::Calc() const
+    {
+        FunctionTable funTab;
+        PFun pFun = funTab.GetFun(m_funcName);
+
+        // call the function pointed to by pFun on the evaluated expression
+        return (*pFun)(m_pNode->Calc());
+    }
+
+} // namespace Calc
