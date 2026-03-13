@@ -22,4 +22,8 @@
 #include <wxx_treeview.h>
 #include <wxx_wincore.h>
 
+#ifndef WADEXPLORER_PROJECT_DIR
+#define WADEXPLORER_PROJECT_DIR "."
+#endif
+
 #endif

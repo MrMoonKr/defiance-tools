@@ -2,99 +2,11 @@
 #define WADEXPLORER_EXPLORERVIEW_H
 
 #include "StdAfx.h"
+#include "GLPage.h"
+#include "ImagePage.h"
 #include "resource.h"
+#include "TextPage.h"
 #include "WadData.h"
-
-class CTextPage : public CEdit
-{
-public:
-    CTextPage(const std::wstring& initialText, bool fixedFont = false);
-    virtual ~CTextPage() override = default;
-
-    void SetPageText(const std::wstring& text);
-
-protected:
-    virtual void OnAttach() override;
-    virtual void PreCreate(CREATESTRUCT& cs) override;
-
-private:
-    std::wstring m_initialText;
-    bool m_useFixedFont;
-    CFont m_font;
-};
-
-
-class CImagePage : public CWnd
-{
-public:
-    CImagePage() = default;
-    virtual ~CImagePage() override = default;
-
-    void Clear(const std::wstring& message);
-    void SetPreview(const WadImagePreview& preview);
-
-protected:
-    virtual void OnDraw(CDC& dc) override;
-    virtual void PreCreate(CREATESTRUCT& cs) override;
-    virtual LRESULT WndProc(UINT msg, WPARAM wparam, LPARAM lparam) override;
-
-private:
-    CImagePage(const CImagePage&) = delete;
-    CImagePage& operator=(const CImagePage&) = delete;
-
-    std::wstring m_message;
-    std::wstring m_description;
-    uint32_t m_width = 0;
-    uint32_t m_height = 0;
-    std::vector<uint8_t> m_rgba;
-};
-
-
-class CGlPage : public CWnd
-{
-public:
-    CGlPage() = default;
-    virtual ~CGlPage() override = default;
-
-    void Clear(const std::wstring& message);
-    void SetMeshPreview(const WadMeshPreview& preview, const std::wstring& title, const std::wstring& detail);
-    void SetScene(const std::wstring& title, const std::wstring& detail, bool meshCandidate);
-
-protected:
-    virtual void OnAttach() override;
-    virtual void PreCreate(CREATESTRUCT& cs) override;
-    virtual void PreRegisterClass(WNDCLASS& wc) override;
-    virtual LRESULT WndProc(UINT msg, WPARAM wparam, LPARAM lparam) override;
-
-private:
-    CGlPage(const CGlPage&) = delete;
-    CGlPage& operator=(const CGlPage&) = delete;
-
-    bool InitializeOpenGl();
-    void DestroyOpenGl();
-    void RenderFrame(HDC hdc);
-    void DrawOverlay(HDC hdc) const;
-    void DrawMeshWireframeFallback(HDC hdc) const;
-
-    bool m_hasMeshPreview = false;
-    std::wstring m_title;
-    std::wstring m_detail;
-    bool m_meshCandidate = false;
-    bool m_glReady = false;
-    std::vector<float> m_meshPositions;
-    std::vector<float> m_meshNormals;
-    std::vector<uint32_t> m_meshIndices;
-    float m_meshCenterX = 0.0f;
-    float m_meshCenterY = 0.0f;
-    float m_meshCenterZ = 0.0f;
-    float m_meshRadius = 1.0f;
-    HGLRC m_glrc = nullptr;
-    UINT_PTR m_timerId = 0;
-    float m_rotationDegrees = 0.0f;
-    int m_clientWidth = 1;
-    int m_clientHeight = 1;
-};
-
 
 class CAssetTreeView : public CTreeView
 {
@@ -132,6 +44,7 @@ private:
     LRESULT OnMouseMove(UINT msg, WPARAM wparam, LPARAM lparam);
     LRESULT OnSetCursor(UINT msg, WPARAM wparam, LPARAM lparam);
     LRESULT OnSize(UINT msg, WPARAM wparam, LPARAM lparam);
+    LRESULT OnContextMenu(UINT msg, WPARAM wparam, LPARAM lparam);
 
     void CreateChildWindows();
     void LayoutChildren();
@@ -155,6 +68,8 @@ private:
     void SetStatusText(const std::wstring& text);
     bool IsOnSplitter(int x) const;
     bool AssetMatchesFilter(const WadAsset& asset) const;
+    void ShowTreeContextMenu(POINT screenPoint);
+    void ExportAssetRaw(size_t wadIndex, size_t assetIndex);
 
     enum class TreeNodeKind
     {

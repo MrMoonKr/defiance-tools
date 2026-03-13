@@ -99,6 +99,7 @@ public:
     WadAssetPayload ReadAssetPayload(const WadAsset& asset) const;
 
     static std::wstring AssetTypeName(uint32_t assetType);
+    static std::wstring AssetTypeExtension(uint32_t assetType);
     static std::wstring FormatSize(uint64_t size);
     static std::wstring FormatTimestamp(uint64_t unixTime);
     static std::wstring HexDump(const std::vector<uint8_t>& data, size_t maxBytes = 512 * 1024);

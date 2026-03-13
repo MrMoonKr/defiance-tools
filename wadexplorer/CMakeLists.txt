@@ -3,6 +3,9 @@ set(WADEXPLORER_SOURCES
   Mainfrm.cpp
   WadExplorerApp.cpp
   ExplorerView.cpp
+  GLPage.cpp
+  ImagePage.cpp
+  TextPage.cpp
   WadData.cpp
 )
 
@@ -35,6 +38,7 @@ target_compile_definitions(
     UNICODE
     _UNICODE
     NOMINMAX
+    WADEXPLORER_PROJECT_DIR="${CMAKE_SOURCE_DIR}"
 )
 
 if(MSVC)

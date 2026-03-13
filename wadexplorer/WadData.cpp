@@ -735,6 +735,28 @@ std::wstring WadArchiveModel::AssetTypeName(uint32_t assetType)
     }
 }
 
+std::wstring WadArchiveModel::AssetTypeExtension(uint32_t assetType)
+{
+    switch (assetType)
+    {
+    case RMID_TYPE_RAW: return L".bin";
+    case RMID_TYPE_SHD: return L".shd";
+    case RMID_TYPE_TEX: return L".tex";
+    case RMID_TYPE_MES: return L".mes";
+    case RMID_TYPE_SKI: return L".ski";
+    case RMID_TYPE_ACT: return L".act";
+    case RMID_TYPE_SKE: return L".ske";
+    case RMID_TYPE_ANI: return L".ani";
+    case RMID_TYPE_SND: return L".snd";
+    case RMID_TYPE_MOV: return L".mov";
+    case RMID_TYPE_SPK: return L".spk";
+    case RMID_TYPE_CON: return L".con";
+    case RMID_TYPE_LIP: return L".lip";
+    default:
+        return L".bin";
+    }
+}
+
 std::wstring WadArchiveModel::FormatSize(uint64_t size)
 {
     double value = static_cast<double>(size);
